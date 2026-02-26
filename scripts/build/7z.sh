@@ -5,7 +5,7 @@ set -euo pipefail
 case "$OS" in
   ubuntu-latest)  URL="https://www.7-zip.org/a/7z2600-linux-x64.tar.xz" ;;
   macos-latest)   URL="https://www.7-zip.org/a/7z2600-mac.tar.xz" ;;
-  windows-latest) URL="https://www.7-zip.org/a/7z2600-extra.7z" ;;
+  windows-latest) URL="https://www.7-zip.org/a/7z2600-x64.exe" ;;
   *)              echo "Unsupported OS: $OS" >&2; exit 1 ;;
 esac
 
@@ -16,17 +16,27 @@ else
 fi
 
 if [[ "$OS" == "windows-latest" ]]; then
-  # Standalone console version: extract from 7z2600-extra.7z using 7zr.exe
+  # Full installer has 7zz (Zstandard support). Silent install to temp dir, then copy 7zz.exe.
   WORK=$(mktemp -d)
   trap 'rm -rf "$WORK"' EXIT
-  curl -sSL "https://www.7-zip.org/a/7zr.exe" -o "$WORK/7zr.exe"
-  curl -sSL "$URL" -o "$WORK/extra.7z"
-  "$WORK/7zr.exe" x -o"$WORK" "$WORK/extra.7z" -y >/dev/null
-  find "$WORK" -type f -name "*.exe"
-  # Extra package: 7zz.exe or 7za.exe, often in x64/ for 64-bit. Search full tree.
-  BIN=$(find "$WORK" -type f \( -name "7zz.exe" -o -name "7za.exe" -o -name "7z.exe" \) | head -1)
+  curl -sSL "$URL" -o "$WORK/7z_installer.exe"
+  INSTALL_DIR="$WORK/7z"
+  mkdir -p "$INSTALL_DIR"
+  if command -v cygpath &>/dev/null; then
+    WIN_DIR=$(cygpath -w "$INSTALL_DIR")
+  else
+    WIN_DIR="$INSTALL_DIR"
+  fi
+  "$WORK/7z_installer.exe" /S "/D=$WIN_DIR" || true
+  BIN=$(find "$INSTALL_DIR" -type f \( -name "7zz.exe" -o -name "7z.exe" \) 2>/dev/null | head -1)
+  if [[ -z "$BIN" ]] && [[ -f "/c/Program Files/7-Zip/7zz.exe" ]]; then
+    BIN="/c/Program Files/7-Zip/7zz.exe"
+  fi
+  if [[ -z "$BIN" ]] && [[ -f "/c/Program Files/7-Zip/7z.exe" ]]; then
+    BIN="/c/Program Files/7-Zip/7z.exe"
+  fi
   if [[ -z "$BIN" ]]; then
-    echo "No 7zz.exe/7za.exe/7z.exe found in 7-Zip extra archive" >&2
+    echo "No 7zz.exe/7z.exe found after install" >&2
     exit 1
   fi
   cp "$BIN" "$OUT"
