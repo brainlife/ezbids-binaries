@@ -40,6 +40,7 @@ jobs:
         with:
           name: ${{ matrix.library }}-${{ matrix.os }}
           path: ${{ steps.build.outputs.binary_path }}
+          retention-days: 1
 
   release:
     name: Create release
