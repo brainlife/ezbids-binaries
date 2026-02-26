@@ -17,13 +17,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [
-            ubuntu-latest,
-            macos-latest,
-            # windows-latest,
-          ]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         library:
           - dcm2niix
+          - 7z
 
     steps:
       - name: Checkout
