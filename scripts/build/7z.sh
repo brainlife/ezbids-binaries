@@ -22,10 +22,11 @@ if [[ "$OS" == "windows-latest" ]]; then
   curl -sSL "https://www.7-zip.org/a/7zr.exe" -o "$WORK/7zr.exe"
   curl -sSL "$URL" -o "$WORK/extra.7z"
   "$WORK/7zr.exe" x -o"$WORK" "$WORK/extra.7z" -y >/dev/null
-  # Prefer 7zz.exe (x64), then 7z.exe
-  BIN=$(find "$WORK" -maxdepth 3 \( -name "7zz.exe" -o -name "7z.exe" \) -type f | head -1)
+  find "$WORK" -type f -name "*.exe"
+  # Extra package: 7zz.exe or 7za.exe, often in x64/ for 64-bit. Search full tree.
+  BIN=$(find "$WORK" -type f \( -name "7zz.exe" -o -name "7za.exe" -o -name "7z.exe" \) | head -1)
   if [[ -z "$BIN" ]]; then
-    echo "No 7zz.exe/7z.exe found in 7-Zip extra archive" >&2
+    echo "No 7zz.exe/7za.exe/7z.exe found in 7-Zip extra archive" >&2
     exit 1
   fi
   cp "$BIN" "$OUT"
