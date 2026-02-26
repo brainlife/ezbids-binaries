@@ -1,0 +1,70 @@
+# Build binaries for each library on Linux, macOS, and Windows,
+# then publish them to a GitHub release.
+# Trigger: push a version tag (e.g. v1.0.0).
+
+name: Release binaries
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build ${{ matrix.library }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+            ubuntu-latest,
+            macos-latest,
+            # windows-latest,
+          ]
+        library:
+          - dcm2niix
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build binary
+        id: build
+        shell: bash
+        run: |
+          mkdir -p dist
+          ./scripts/build.sh "${{ matrix.library }}" "${{ matrix.os }}" dist
+          BINARY_PATH=$(./scripts/output-path.sh "${{ matrix.library }}" "${{ matrix.os }}" dist)
+          echo "binary_path=$BINARY_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.library }}-${{ matrix.os }}
+          path: ${{ steps.build.outputs.binary_path }}
+
+  release:
+    name: Create release
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets (flat names)
+        run: |
+          mkdir -p release
+          find artifacts -type f -exec cp {} release/ \;
+          ls -la release/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
