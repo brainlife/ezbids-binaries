@@ -16,27 +16,20 @@ else
 fi
 
 if [[ "$OS" == "windows-latest" ]]; then
-  # Full installer has 7zz (Zstandard support). Silent install to temp dir, then copy 7zz.exe.
+  # windows-latest has 7-Zip preinstalled. Extract the installer exe (no GUI), then copy 7zz out.
   WORK=$(mktemp -d)
   trap 'rm -rf "$WORK"' EXIT
   curl -sSL "$URL" -o "$WORK/7z_installer.exe"
-  INSTALL_DIR="$WORK/7z"
-  mkdir -p "$INSTALL_DIR"
-  if command -v cygpath &>/dev/null; then
-    WIN_DIR=$(cygpath -w "$INSTALL_DIR")
-  else
-    WIN_DIR="$INSTALL_DIR"
-  fi
-  "$WORK/7z_installer.exe" /S "/D=$WIN_DIR" || true
-  BIN=$(find "$INSTALL_DIR" -type f \( -name "7zz.exe" -o -name "7z.exe" \) 2>/dev/null | head -1)
-  if [[ -z "$BIN" ]] && [[ -f "/c/Program Files/7-Zip/7zz.exe" ]]; then
-    BIN="/c/Program Files/7-Zip/7zz.exe"
-  fi
-  if [[ -z "$BIN" ]] && [[ -f "/c/Program Files/7-Zip/7z.exe" ]]; then
-    BIN="/c/Program Files/7-Zip/7z.exe"
-  fi
+  SEVENZ=$(command -v 7z 2>/dev/null || command -v 7zz 2>/dev/null || true)
+  [[ -n "$SEVENZ" ]] || SEVENZ="/c/Program Files/7-Zip/7z.exe"
+  [[ -x "$SEVENZ" ]] || SEVENZ="7z"
+  "$SEVENZ" x "$WORK/7z_installer.exe" -o"$WORK/7z_extract" -y >/dev/null
+  echo "Contents of 7z_extract:" && find "$WORK/7z_extract" -type f | sort
+  # Prefer 7zz.exe (standalone, no DLL); 7z.exe needs 7z.dll for many formats.
+  BIN=$(find "$WORK/7z_extract" -type f -name "7zz.exe" 2>/dev/null | head -1)
+  [[ -n "$BIN" ]] || BIN=$(find "$WORK/7z_extract" -type f -name "7z.exe" 2>/dev/null | head -1)
   if [[ -z "$BIN" ]]; then
-    echo "No 7zz.exe/7z.exe found after install" >&2
+    echo "No 7zz.exe or 7z.exe found in extracted installer" >&2
     exit 1
   fi
   cp "$BIN" "$OUT"
