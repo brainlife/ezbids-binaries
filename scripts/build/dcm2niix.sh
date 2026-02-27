@@ -5,18 +5,19 @@ set -euo pipefail
 VERSION="v1.0.20250506"
 BASE_URL="https://github.com/rordenlab/dcm2niix/releases/download/${VERSION}"
 
+# Resolve scripts dir so we work regardless of cwd (build.sh exports these; verify for standalone use).
+: "${LIBRARY:?LIBRARY not set}"
+: "${OS:?OS not set}"
+: "${DIST:?DIST not set}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUT=$("$SCRIPT_DIR/output-path.sh" "$LIBRARY" "$OS" "$DIST")
+
 case "$OS" in
   ubuntu-latest)   ZIP="dcm2niix_lnx.zip" ;;
   macos-latest)    ZIP="dcm2niix_mac.zip" ;;
   windows-latest)  ZIP="dcm2niix_win.zip" ;;
   *)               echo "Unsupported OS: $OS" >&2; exit 1 ;;
 esac
-
-if [[ "$OS" == "windows-latest" ]]; then
-  OUT="${DIST}/${LIBRARY}-${PLATFORM}.exe"
-else
-  OUT="${DIST}/${LIBRARY}-${PLATFORM}"
-fi
 
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT

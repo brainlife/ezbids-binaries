@@ -6,12 +6,8 @@ LIBRARY="${1:?library name}"
 OS="${2:?os}"
 DIST="${3:?dist directory}"
 
-case "$OS" in
-  ubuntu-latest)   PLATFORM=linux-amd64 ;;
-  macos-latest)    PLATFORM=darwin-amd64 ;;
-  windows-latest)  PLATFORM=windows-amd64 ;;
-  *)               PLATFORM="$OS" ;;
-esac
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLATFORM=$("$SCRIPT_DIR/platform.sh" "$OS")
 
 OUTPUT_NAME="${LIBRARY}-${PLATFORM}"
 if [[ "$OS" == "windows-latest" ]]; then
