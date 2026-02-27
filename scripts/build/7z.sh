@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+VERSION="2600"
+BASE_URL="https://www.7-zip.org/a/7z${VERSION}"
+
 # Resolve scripts dir so we work regardless of cwd (build.sh exports these; verify for standalone use).
 : "${LIBRARY:?LIBRARY not set}"
 : "${OS:?OS not set}"
@@ -10,9 +13,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT=$("$SCRIPT_DIR/output-path.sh" "$LIBRARY" "$OS" "$DIST")
 
 case "$OS" in
-  ubuntu-latest)  URL="https://www.7-zip.org/a/7z2600-linux-x64.tar.xz" ;;
-  macos-latest)   URL="https://www.7-zip.org/a/7z2600-mac.tar.xz" ;;
-  windows-latest) URL="https://www.7-zip.org/a/7z2600-x64.exe" ;;
+  ubuntu-latest)  URL="${BASE_URL}-linux-x64.tar.xz" ;;
+  macos-latest)   URL="${BASE_URL}-mac.tar.xz" ;;
+  windows-latest) URL="${BASE_URL}-x64.exe" ;;
   *)              echo "Unsupported OS: $OS" >&2; exit 1 ;;
 esac
 
