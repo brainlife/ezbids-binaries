@@ -22,7 +22,9 @@ case "$OS" in
   *)              echo "Unsupported OS: $OS" >&2; exit 1 ;;
 esac
 
-PBS_BASE="cpython-${PYTHON_VERSION}+${PBS_RELEASE}-${PBS_SUFFIX}"
+PBS_BASE="cpython-${PYTHON_VERSION}-${PBS_SUFFIX}"
+
+# Release 20210506 (and older) use .tar.zst; newer releases often have install_only as .tar.gz.
 PBS_URL="${BASE_URL}/${PBS_RELEASE}/${PBS_BASE}.tar.zst"
 
 # TODO: retrieve requirements.txt from ezbids repo. For now, use the requirements.txt in the assets folder.
@@ -40,9 +42,10 @@ trap 'rm -rf "$WORK"' EXIT
 #   exit 1
 # fi
 
-# 2. Download and unpack python-build-standalone (.tar.zst)
+# 2. Download and unpack python-build-standalone (.tar.zst for 20210506)
 curl -sSL "$PBS_URL" -o "$WORK/pbs.tar.zst"
-zstd -d -c "$WORK/pbs.tar.zst" | tar -xf - -C "$WORK"
+zstd -d "$WORK/pbs.tar.zst" -o "$WORK/pbs.tar"
+tar -xf "$WORK/pbs.tar" -C "$WORK"
 PYROOT=$(find "$WORK" -maxdepth 1 -mindepth 1 -type d | head -1)
 
 if [[ "$OS" == "windows-latest" ]]; then
