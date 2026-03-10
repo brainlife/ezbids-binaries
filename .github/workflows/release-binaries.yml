@@ -21,6 +21,7 @@ jobs:
         library:
           - dcm2niix
           - 7z
+          - python-runtime
 
     steps:
       - name: Checkout
@@ -33,13 +34,16 @@ jobs:
           mkdir -p dist
           ./scripts/build.sh "${{ matrix.library }}" "${{ matrix.os }}" dist
           BINARY_PATH=$(./scripts/output-path.sh "${{ matrix.library }}" "${{ matrix.os }}" dist)
+          if [[ "${{ matrix.library }}" == "7z" && "${{ matrix.os }}" == "windows-latest" ]]; then
+            BINARY_PATH="dist"
+          fi
           echo "binary_path=$BINARY_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.library }}-${{ matrix.os }}
-          path: ${{ matrix.library == '7z' && matrix.os == 'windows-latest' && 'dist' || steps.build.outputs.binary_path }}
+          path: ${{ steps.build.outputs.binary_path }}
           retention-days: 1
 
   release:

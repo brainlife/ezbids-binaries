@@ -6,12 +6,31 @@ LIBRARY="${1:?library name}"
 OS="${2:?os}"
 DIST="${3:?dist directory}"
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PLATFORM=$("$SCRIPT_DIR/platform.sh" "$OS")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-OUTPUT_NAME="${LIBRARY}-${PLATFORM}"
+case "$OS" in
+  ubuntu-latest)
+    PLATFORM="linux-amd64"
+    ;;
+  macos-latest)
+    case "$(uname -m)" in
+      arm64|aarch64) PLATFORM="darwin-arm64" ;;
+      x86_64)        PLATFORM="darwin-amd64" ;;
+      *)             PLATFORM="darwin-amd64" ;;
+    esac
+    ;;
+  windows-latest)
+    PLATFORM="windows-amd64"
+    ;;
+  *)
+    PLATFORM="$OS"
+    ;;
+esac
+
 if [[ "$OS" == "windows-latest" ]]; then
-  echo "${DIST}/${OUTPUT_NAME}.exe"
+  echo "${DIST}/${LIBRARY}-${PLATFORM}.exe"
+elif [[ "$LIBRARY" == "python-runtime" ]]; then
+  echo "${DIST}/${LIBRARY}-${PLATFORM}.tar.gz"
 else
-  echo "${DIST}/${OUTPUT_NAME}"
+  echo "${DIST}/${LIBRARY}-${PLATFORM}"
 fi

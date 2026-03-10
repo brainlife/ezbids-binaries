@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-VERSION="v1.0.20250506"
-BASE_URL="https://github.com/rordenlab/dcm2niix/releases/download/${VERSION}"
+DCM2NIIX_RELEASE="${DCM2NIIX_VERSION:-v1.0.20250506}"
+BASE_URL="https://github.com/rordenlab/dcm2niix/releases/download/${DCM2NIIX_RELEASE}"
 
 # Resolve scripts dir so we work regardless of cwd (build.sh exports these; verify for standalone use).
 : "${LIBRARY:?LIBRARY not set}"

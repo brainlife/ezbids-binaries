@@ -7,7 +7,6 @@ OS="${2:?os (e.g. ubuntu-latest)}"
 DIST="${3:?dist directory}"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PLATFORM=$("$SCRIPT_DIR/platform.sh" "$OS")
 
 SCRIPT="$SCRIPT_DIR/build/${LIBRARY}.sh"
 if [[ ! -f "$SCRIPT" ]]; then
@@ -16,5 +15,5 @@ if [[ ! -f "$SCRIPT" ]]; then
 fi
 
 mkdir -p "$DIST"
-export LIBRARY OS PLATFORM DIST
+export LIBRARY OS DIST
 "$SCRIPT"

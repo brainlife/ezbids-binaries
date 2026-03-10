@@ -5,8 +5,20 @@ set -euo pipefail
 OS="${1:?OS (e.g. ubuntu-latest)}"
 
 case "$OS" in
-  ubuntu-latest)   echo linux-amd64 ;;
-  macos-latest)    echo darwin-amd64 ;;
-  windows-latest)  echo windows-amd64 ;;
-  *)               echo "$OS" ;;
+  ubuntu-latest)
+    echo linux-amd64
+    ;;
+  macos-latest)
+    case "$(uname -m)" in
+      arm64|aarch64) echo darwin-arm64 ;;
+      x86_64)        echo darwin-amd64 ;;
+      *)             echo darwin-amd64 ;;
+    esac
+    ;;
+  windows-latest)
+    echo windows-amd64
+    ;;
+  *)
+    echo "$OS"
+    ;;
 esac

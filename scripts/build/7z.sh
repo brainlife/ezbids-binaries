@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-VERSION="2600"
-BASE_URL="https://www.7-zip.org/a/7z${VERSION}"
+SEVENZ_RELEASE="${SEVENZ_RELEASE:-2600}"
+BASE_URL="https://www.7-zip.org/a/7z${SEVENZ_RELEASE}"
 
 # Resolve scripts dir so we work regardless of cwd (build.sh exports these; verify for standalone use).
 : "${LIBRARY:?LIBRARY not set}"
@@ -28,7 +28,7 @@ if [[ "$OS" == "windows-latest" ]]; then
   [[ -n "$SEVENZ" ]] || SEVENZ="/c/Program Files/7-Zip/7z.exe"
   [[ -x "$SEVENZ" ]] || SEVENZ="7z"
   "$SEVENZ" x "$WORK/7z_installer.exe" -o"$WORK/7z_extract" -y >/dev/null
-  # Windows installer has 7z.exe (not 7zz.exe). 7z.exe needs 7z.dll for many formats (e.g. Zstandard).
+  # Windows installer has 7z.exe (not 7zz.exe). 7z.exe needs 7z.dll as well to support many formats (e.g. Zstandard).
   BIN=$(find "$WORK/7z_extract" -type f -name "7z.exe" 2>/dev/null | head -1)
   if [[ -z "$BIN" ]]; then
     echo "No 7z.exe found in extracted installer" >&2
