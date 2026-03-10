@@ -16,14 +16,14 @@ OUT=$("$SCRIPT_DIR/output-path.sh" "$LIBRARY" "$OS" "$DIST")
 OUT="${OUT}.tar.gz"
 
 case "$OS" in
-  ubuntu-latest)  PBS_SUFFIX="x86_64-unknown-linux-gnu-install_only" ;;
-  macos-latest)   PBS_SUFFIX="x86_64-apple-darwin-install_only" ;;
-  windows-latest) PBS_SUFFIX="x86_64-pc-windows-msvc-install_only" ;;
+  ubuntu-latest)  PBS_SUFFIX="x86_64-unknown-linux-gnu-pgo+lto-${PBS_RELEASE}T0943" ;;
+  macos-latest)   PBS_SUFFIX="x86_64-apple-darwin-pgo+lto-${PBS_RELEASE}T0943" ;;
+  windows-latest) PBS_SUFFIX="x86_64-pc-windows-msvc-shared-pgo-${PBS_RELEASE}T0943" ;;
   *)              echo "Unsupported OS: $OS" >&2; exit 1 ;;
 esac
 
 PBS_BASE="cpython-${PYTHON_VERSION}+${PBS_RELEASE}-${PBS_SUFFIX}"
-PBS_URL="${BASE_URL}/${PBS_RELEASE}/${PBS_BASE}.tar.gz"
+PBS_URL="${BASE_URL}/${PBS_RELEASE}/${PBS_BASE}.tar.zst"
 
 # TODO: retrieve requirements.txt from ezbids repo. For now, use the requirements.txt in the assets folder.
 # EZBIDS_REPO="${EZBIDS_REPO:-brainlife/ezbids}"
@@ -40,9 +40,9 @@ trap 'rm -rf "$WORK"' EXIT
 #   exit 1
 # fi
 
-# 2. Download and unpack python-build-standalone
-curl -sSL "$PBS_URL" -o "$WORK/pbs.tar.gz"
-tar -xzf "$WORK/pbs.tar.gz" -C "$WORK"
+# 2. Download and unpack python-build-standalone (.tar.zst)
+curl -sSL "$PBS_URL" -o "$WORK/pbs.tar.zst"
+zstd -d -c "$WORK/pbs.tar.zst" | tar -xf - -C "$WORK"
 PYROOT=$(find "$WORK" -maxdepth 1 -mindepth 1 -type d | head -1)
 
 if [[ "$OS" == "windows-latest" ]]; then
