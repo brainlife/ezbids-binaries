@@ -47,20 +47,25 @@ curl -sSL "$PBS_URL" -o "$WORK/pbs.tar.zst"
 zstd -d "$WORK/pbs.tar.zst" -o "$WORK/pbs.tar"
 tar -xf "$WORK/pbs.tar" -C "$WORK"
 PYROOT=$(find "$WORK" -maxdepth 1 -mindepth 1 -type d | head -1)
+# Full archives (e.g. 20210506 .tar.zst) have the runnable Python under install/; install_only has it at the top level.
+if [[ -d "$PYROOT/install" ]]; then
+  PYROOT="$PYROOT/install"
+fi
 
 if [[ "$OS" == "windows-latest" ]]; then
   PYEXE="$PYROOT/python.exe"
   VENV_PIP="$WORK/venv/Scripts/pip.exe"
 else
+  # Both in same location: python/install/bin/python3, python/install/bin/pip3
   PYEXE="$PYROOT/bin/python3"
-  VENV_PIP="$WORK/venv/bin/pip"
+  VENV_PIP="$WORK/venv/bin/pip3"
 fi
 if [[ ! -x "$PYEXE" ]]; then
   echo "Standalone Python not found at $PYEXE" >&2
   exit 1
 fi
 
-# 3. Create venv and install dependencies
+# 3. Create venv and install dependencies into it
 "$PYEXE" -m venv "$WORK/venv"
 "$VENV_PIP" install --no-cache-dir -r "$SCRIPT_DIR/assets/requirements.txt"
 
