@@ -25,19 +25,20 @@ esac
 PBS_BASE="cpython-${PYTHON_VERSION}+${PBS_RELEASE}-${PBS_SUFFIX}"
 PBS_URL="${BASE_URL}/${PBS_RELEASE}/${PBS_BASE}.tar.gz"
 
-EZBIDS_REPO="${EZBIDS_REPO:-brainlife/ezbids}"
-EZBIDS_BRANCH="${EZBIDS_BRANCH:-electron}"
-EZBIDS_REQUIREMENTS_URL="https://raw.githubusercontent.com/${EZBIDS_REPO}/${EZBIDS_BRANCH}/requirements.txt"
+# TODO: retrieve requirements.txt from ezbids repo. For now, use the requirements.txt in the assets folder.
+# EZBIDS_REPO="${EZBIDS_REPO:-brainlife/ezbids}"
+# EZBIDS_BRANCH="${EZBIDS_BRANCH:-electron}"
+# EZBIDS_REQUIREMENTS_URL="https://raw.githubusercontent.com/${EZBIDS_REPO}/${EZBIDS_BRANCH}/requirements.txt"
 
-WORK=$(mktemp -d)
-trap 'rm -rf "$WORK"' EXIT
+# WORK=$(mktemp -d)
+# trap 'rm -rf "$WORK"' EXIT
 
-# 1. Fetch requirements.txt from ezbids repo
-curl -sSL "$EZBIDS_REQUIREMENTS_URL" -o "$WORK/requirements.txt"
-if [[ ! -s "$WORK/requirements.txt" ]]; then
-  echo "Failed to fetch or empty requirements.txt from $EZBIDS_REQUIREMENTS_URL" >&2
-  exit 1
-fi
+# # 1. Fetch requirements.txt from ezbids repo
+# curl -sSL "$EZBIDS_REQUIREMENTS_URL" -o "$WORK/requirements.txt"
+# if [[ ! -s "$WORK/requirements.txt" ]]; then
+#   echo "Failed to fetch or empty requirements.txt from $EZBIDS_REQUIREMENTS_URL" >&2
+#   exit 1
+# fi
 
 # 2. Download and unpack python-build-standalone
 curl -sSL "$PBS_URL" -o "$WORK/pbs.tar.gz"
@@ -58,7 +59,7 @@ fi
 
 # 3. Create venv and install dependencies
 "$PYEXE" -m venv "$WORK/venv"
-"$VENV_PIP" install --no-cache-dir -r "$WORK/requirements.txt"
+"$VENV_PIP" install --no-cache-dir -r $SCRIPT_DIR/assets/requirements.txt"
 
 # 4. Package: rename standalone dir to "python", then tar python + venv
 mv "$PYROOT" "$WORK/python"
