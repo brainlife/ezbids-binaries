@@ -4,8 +4,8 @@
 set -euo pipefail
 
 # Pinned for reproducibility (astral-sh/python-build-standalone).
-PBS_RELEASE="${PBS_RELEASE:-20260303}"
-PYTHON_VERSION="${PYTHON_VERSION:-3.12.13}"
+PBS_RELEASE="${PBS_RELEASE:-20210506}"
+PYTHON_VERSION="${PYTHON_VERSION:-3.8.10}"
 BASE_URL="https://github.com/astral-sh/python-build-standalone/releases/download/"
 
 : "${LIBRARY:?LIBRARY not set}"
