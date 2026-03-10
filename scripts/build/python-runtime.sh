@@ -59,10 +59,8 @@ fi
 
 # 3. Create venv and install dependencies
 "$PYEXE" -m venv "$WORK/venv"
-"$VENV_PIP" install --no-cache-dir -r $SCRIPT_DIR/assets/requirements.txt"
+"$VENV_PIP" install --no-cache-dir -r "$SCRIPT_DIR/assets/requirements.txt"
 
 # 4. Package: rename standalone dir to "python", then tar python + venv
 mv "$PYROOT" "$WORK/python"
 tar -czf "$OUT" -C "$WORK" python venv
-
-echo "Built: $OUT"
