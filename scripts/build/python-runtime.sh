@@ -30,8 +30,8 @@ PBS_URL="${BASE_URL}/${PBS_RELEASE}/${PBS_BASE}.tar.gz"
 # EZBIDS_BRANCH="${EZBIDS_BRANCH:-electron}"
 # EZBIDS_REQUIREMENTS_URL="https://raw.githubusercontent.com/${EZBIDS_REPO}/${EZBIDS_BRANCH}/requirements.txt"
 
-# WORK=$(mktemp -d)
-# trap 'rm -rf "$WORK"' EXIT
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
 
 # # 1. Fetch requirements.txt from ezbids repo
 # curl -sSL "$EZBIDS_REQUIREMENTS_URL" -o "$WORK/requirements.txt"
