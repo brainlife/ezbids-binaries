@@ -47,6 +47,9 @@ curl -sSL "$PBS_URL" -o "$WORK/pbs.tar.zst"
 zstd -d "$WORK/pbs.tar.zst" -o "$WORK/pbs.tar"
 tar -xf "$WORK/pbs.tar" -C "$WORK"
 PYROOT=$(find "$WORK" -maxdepth 1 -mindepth 1 -type d | head -1)
+# Rename to a fixed name immediately so we never clash with archive top-level dir (e.g. "python").
+mv "$PYROOT" "$WORK/python_standalone_extracted"
+PYROOT="$WORK/python_standalone_extracted"
 # Full archives (e.g. 20210506 .tar.zst) have the runnable Python under install/; install_only has it at the top level.
 if [[ -d "$PYROOT/install" ]]; then
   PYROOT="$PYROOT/install"
