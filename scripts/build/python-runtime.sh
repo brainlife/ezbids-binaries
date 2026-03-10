@@ -13,7 +13,6 @@ BASE_URL="https://github.com/astral-sh/python-build-standalone/releases/download
 : "${DIST:?DIST not set}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT=$("$SCRIPT_DIR/output-path.sh" "$LIBRARY" "$OS" "$DIST")
-OUT="${OUT}.tar.gz"
 
 case "$OS" in
   ubuntu-latest)  PBS_SUFFIX="x86_64-unknown-linux-gnu-pgo+lto-${PBS_RELEASE}T0943" ;;
