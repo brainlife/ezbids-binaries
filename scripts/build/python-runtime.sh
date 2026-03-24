@@ -71,6 +71,23 @@ fi
 "$PYEXE" -m venv "$WORK/venv"
 "$VENV_PIP" install --no-cache-dir -r "$SCRIPT_DIR/assets/requirements.txt"
 
-# 4. Package: rename standalone dir to "python", then tar python + venv
+# 4. Package: rename standalone dir to "python", fix venv symlinks, then tar python + venv
 mv "$PYROOT" "$WORK/python"
+
+# The venv was created with the standalone Python at its original temp path, so
+# venv/bin/python* symlinks are absolute (e.g. /tmp/.../python_standalone_extracted/install/bin/python3).
+# Rewrite them as relative symlinks so the tarball is relocatable:
+#   venv/bin/python3  ->  ../../python/bin/python3
+if [[ "$OS" != "windows-latest" ]]; then
+  VENV_BIN="$WORK/venv/bin"
+  for link in "$VENV_BIN"/python*; do
+    if [[ -L "$link" ]]; then
+      target="$(readlink "$link")"
+      if [[ "$target" == /* ]]; then
+        ln -sf "../../python/bin/$(basename "$target")" "$link"
+      fi
+    fi
+  done
+fi
+
 tar -czf "$OUT" -C "$WORK" python venv
