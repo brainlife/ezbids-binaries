@@ -27,10 +27,11 @@ case "$OS" in
     ;;
 esac
 
-if [[ "$OS" == "windows-latest" ]]; then
-  echo "${DIST}/${LIBRARY}-${PLATFORM}.exe"
-elif [[ "$LIBRARY" == "python-runtime" ]]; then
+# python-runtime is a tarball on all platforms (including Windows).
+if [[ "$LIBRARY" == "python-runtime" ]]; then
   echo "${DIST}/${LIBRARY}-${PLATFORM}.tar.gz"
+elif [[ "$OS" == "windows-latest" ]]; then
+  echo "${DIST}/${LIBRARY}-${PLATFORM}.exe"
 else
   echo "${DIST}/${LIBRARY}-${PLATFORM}"
 fi
