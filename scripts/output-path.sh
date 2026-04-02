@@ -27,7 +27,13 @@ case "$OS" in
     ;;
 esac
 
-# python-runtime is a tarball on all platforms (including Windows).
+echo "--------------------------------"
+echo "LIBRARY: $LIBRARY"
+echo "OS: $OS"
+echo "PLATFORM: $PLATFORM"
+echo "DIST: $DIST"
+echo "--------------------------------"
+
 if [[ "$LIBRARY" == "python-runtime" ]]; then
   echo "${DIST}/${LIBRARY}-${PLATFORM}.tar.gz"
 elif [[ "$OS" == "windows-latest" ]]; then
