@@ -27,12 +27,14 @@ case "$OS" in
     ;;
 esac
 
-echo "--------------------------------"
-echo "LIBRARY: $LIBRARY"
-echo "OS: $OS"
-echo "PLATFORM: $PLATFORM"
-echo "DIST: $DIST"
-echo "--------------------------------"
+{
+  echo "--------------------------------"
+  echo "LIBRARY: $LIBRARY"
+  echo "OS: $OS"
+  echo "PLATFORM: $PLATFORM"
+  echo "DIST: $DIST"
+  echo "--------------------------------"
+} >&2
 
 if [[ "$LIBRARY" == "python-runtime" ]]; then
   echo "${DIST}/${LIBRARY}-${PLATFORM}.tar.gz"
