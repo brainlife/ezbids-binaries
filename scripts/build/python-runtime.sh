@@ -73,25 +73,25 @@ fi
 
 # 4. Trim bloat from the standalone Python and the venv to reduce tarball size.
 
-# remove scipy bloat
-# Test dirs (safe)
-find "$WORK/venv/lib/python3.8/site-packages/scipy" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
-# Compiled test binaries
-find "$WORK/venv/lib/python3.8/site-packages/scipy" -name "*.pyx" -delete
-# Benchmark data
-rm -rf "$WORK/venv/lib/python3.8/site-packages/scipy/sparse/linalg/_dsolve/tests"
+# # remove scipy bloat
+# # Test dirs (safe)
+# find "$WORK/venv/lib/python3.8/site-packages/scipy" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+# # Compiled test binaries
+# find "$WORK/venv/lib/python3.8/site-packages/scipy" -name "*.pyx" -delete
+# # Benchmark data
+# rm -rf "$WORK/venv/lib/python3.8/site-packages/scipy/sparse/linalg/_dsolve/tests"
 
-# remove numpy bloat
-# Safe to remove
-find "$WORK/venv/lib/python3.8/site-packages/numpy" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
-find "$WORK/venv/lib/python3.8/site-packages/numpy" -name "*.pyx" -delete
-rm -rf "$WORK/venv/lib/python3.8/site-packages/numpy/distutils"  # already doing this
-rm -rf "$WORK/venv/lib/python3.8/site-packages/numpy/f2py"       # Fortran wrapper, not needed at runtime
+# # remove numpy bloat
+# # Safe to remove
+# find "$WORK/venv/lib/python3.8/site-packages/numpy" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+# find "$WORK/venv/lib/python3.8/site-packages/numpy" -name "*.pyx" -delete
+# rm -rf "$WORK/venv/lib/python3.8/site-packages/numpy/distutils"  # already doing this
+# rm -rf "$WORK/venv/lib/python3.8/site-packages/numpy/f2py"       # Fortran wrapper, not needed at runtime
 
-# remove pandas bloat
-find "$WORK/venv/lib/python3.8/site-packages/pandas" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
-find "$WORK/venv/lib/python3.8/site-packages/pandas" -name "*.pyx" -delete
-rm -rf "$WORK/venv/lib/python3.8/site-packages/pandas/io/formats/templates"  # email/html templates
+# # remove pandas bloat
+# find "$WORK/venv/lib/python3.8/site-packages/pandas" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+# find "$WORK/venv/lib/python3.8/site-packages/pandas" -name "*.pyx" -delete
+# rm -rf "$WORK/venv/lib/python3.8/site-packages/pandas/io/formats/templates"  # email/html templates
 
 # remove pip - not needed at runtime
 rm -rf "$WORK/venv/lib/python3.8/site-packages/pip"
