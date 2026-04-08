@@ -71,29 +71,30 @@ fi
 "$PYEXE" -m venv "$WORK/venv"
 "$VENV_PIP" install --no-cache-dir -r "$SCRIPT_DIR/assets/requirements.txt"
 
-# 4. Strip bloat from the standalone Python and the venv to reduce tarball size.
-# Python stdlib
-rm -rf "$PYROOT/lib/python3.8/test"
-rm -rf "$PYROOT/lib/python3.8/idlelib"
-rm -rf "$PYROOT/lib/python3.8/tkinter"
-rm -rf "$PYROOT/lib/python3.8/turtledemo"
-rm -f  "$PYROOT/lib/python3.8/turtle.py"
-rm -rf "$PYROOT/lib/python3.8/lib2to3"
-rm -rf "$PYROOT/lib/python3.8/unittest"
-rm -rf "$PYROOT/lib/python3.8/config-"*
-rm -rf "$PYROOT/include"
-rm -rf "$PYROOT/share"
-rm -f  "$PYROOT/lib/libpython3.8.a"
-# Venv site-packages: tests, bytecode caches, type stubs
-find "$WORK/venv" -type d -name "tests"       -exec rm -rf {} + 2>/dev/null || true
-find "$WORK/venv" -type d -name "test"        -exec rm -rf {} + 2>/dev/null || true
-find "$WORK/venv" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-find "$WORK/venv" -name "*.pyc" -delete
-find "$WORK/venv" -name "*.pyi" -delete
-# Large package-specific data not needed at runtime
-rm -rf "$WORK/venv/lib/python3.8/site-packages/matplotlib/mpl-data/sample_data"
-rm -rf "$WORK/venv/lib/python3.8/site-packages/mne/data"
-rm -rf "$WORK/venv/lib/python3.8/site-packages/numpy/distutils"
+# 4. Trim bloat from the standalone Python and the venv to reduce tarball size.
+
+# remove scipy bloat
+# Test dirs (safe)
+find "$WORK/venv/lib/python3.8/site-packages/scipy" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+# Compiled test binaries
+find "$WORK/venv/lib/python3.8/site-packages/scipy" -name "*.pyx" -delete
+# Benchmark data
+rm -rf "$WORK/venv/lib/python3.8/site-packages/scipy/sparse/linalg/_dsolve/tests"
+
+# remove numpy bloat
+# Safe to remove
+find "$WORK/venv/lib/python3.8/site-packages/numpy" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+find "$WORK/venv/lib/python3.8/site-packages/numpy" -name "*.pyx" -delete
+rm -rf "$WORK/venv/lib/python3.8/site-packages/numpy/distutils"  # already doing this
+rm -rf "$WORK/venv/lib/python3.8/site-packages/numpy/f2py"       # Fortran wrapper, not needed at runtime
+
+# remove pandas bloat
+find "$WORK/venv/lib/python3.8/site-packages/pandas" -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true
+find "$WORK/venv/lib/python3.8/site-packages/pandas" -name "*.pyx" -delete
+rm -rf "$WORK/venv/lib/python3.8/site-packages/pandas/io/formats/templates"  # email/html templates
+
+# remove pip - not needed at runtime
+rm -rf "$WORK/venv/lib/python3.8/site-packages/pip"
 
 # 5. Package: rename standalone dir to "python", fix venv symlinks, then tar python + venv
 mv "$PYROOT" "$WORK/python"
