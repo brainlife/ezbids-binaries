@@ -37,7 +37,7 @@ if [[ "$OS" == "windows-latest" ]]; then
   cp "$BIN" "$OUT"
   DLL=$(find "$WORK/7z_extract" -type f -name "7z.dll" 2>/dev/null | head -1)
   if [[ -n "$DLL" ]]; then
-    cp "$DLL" "${OUT%.exe}.dll"
+    cp "$DLL" "$(dirname "$OUT")/7z.dll"
   fi
 else
   WORK=$(mktemp -d)
