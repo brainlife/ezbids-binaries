@@ -44,25 +44,42 @@ jobs:
           update: true
           install: git mingw-w64-x86_64-gcc mingw-w64-x86_64-zlib
 
+      - name: Build binary (allineate, Windows / MSYS2)
+        id: build_aw
+        if: matrix.library == 'allineate' && matrix.os == 'windows-latest'
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          ./scripts/build.sh allineate windows-latest dist
+          echo "binary_path=dist" >> "$GITHUB_OUTPUT"
+
       - name: Build binary
-        id: build
+        id: build_std
+        if: "!(matrix.library == 'allineate' && matrix.os == 'windows-latest')"
         shell: bash
         run: |
           mkdir -p dist
-          if [[ "${{ matrix.library }}" == "allineate" && "${{ matrix.os }}" == "windows-latest" ]]; then
-            WS_UNIX="$(cygpath -u "$GITHUB_WORKSPACE")"
-            msys2 -c "set -euo pipefail; cd \"$WS_UNIX\" && ./scripts/build.sh allineate windows-latest dist"
-          else
-            ./scripts/build.sh "${{ matrix.library }}" "${{ matrix.os }}" dist
-          fi
+          ./scripts/build.sh "${{ matrix.library }}" "${{ matrix.os }}" dist
           BINARY_PATH=$(./scripts/output-path.sh "${{ matrix.library }}" "${{ matrix.os }}" dist)
           if [[ "${{ matrix.library }}" == "7z" && "${{ matrix.os }}" == "windows-latest" ]]; then
             BINARY_PATH="dist"
           fi
-          if [[ "${{ matrix.library }}" == "allineate" && "${{ matrix.os }}" == "windows-latest" ]]; then
-            BINARY_PATH="dist"
-          fi
           echo "binary_path=$BINARY_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Select artifact path
+        id: build
+        shell: bash
+        env:
+          AW_OUT: ${{ steps.build_aw.outputs.binary_path }}
+          STD_OUT: ${{ steps.build_std.outputs.binary_path }}
+          AW_OC: ${{ steps.build_aw.outcome }}
+        run: |
+          if [[ "$AW_OC" == "success" ]]; then
+            echo "binary_path=$AW_OUT" >> "$GITHUB_OUTPUT"
+          else
+            echo "binary_path=$STD_OUT" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
