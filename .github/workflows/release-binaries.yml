@@ -22,19 +22,39 @@ jobs:
           - dcm2niix
           - 7z
           - python-runtime
+          - allineate
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install allineate build deps (Linux)
+        if: matrix.library == 'allineate' && matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libomp-dev zlib1g-dev
+
+      - name: Install allineate build deps (macOS)
+        if: matrix.library == 'allineate' && matrix.os == 'macos-latest'
+        run: brew install libomp
+
+      - name: Set up MSYS2 (allineate, Windows)
+        if: matrix.library == 'allineate' && matrix.os == 'windows-latest'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: git mingw-w64-x86_64-gcc mingw-w64-x86_64-zlib
+
       - name: Build binary
         id: build
-        shell: bash
+        shell: ${{ matrix.library == 'allineate' && matrix.os == 'windows-latest' && 'msys2 {0}' || 'bash' }}
         run: |
           mkdir -p dist
           ./scripts/build.sh "${{ matrix.library }}" "${{ matrix.os }}" dist
           BINARY_PATH=$(./scripts/output-path.sh "${{ matrix.library }}" "${{ matrix.os }}" dist)
           if [[ "${{ matrix.library }}" == "7z" && "${{ matrix.os }}" == "windows-latest" ]]; then
+            BINARY_PATH="dist"
+          fi
+          if [[ "${{ matrix.library }}" == "allineate" && "${{ matrix.os }}" == "windows-latest" ]]; then
             BINARY_PATH="dist"
           fi
           echo "binary_path=$BINARY_PATH" >> "$GITHUB_OUTPUT"
