@@ -62,8 +62,21 @@ compile_macos() {
 }
 
 compile_windows_mingw() {
-  # MSYS2 MinGW64: fully static link (no OpenMP) so the release .exe has no MinGW/Zlib DLL deps.
-  gcc -O3 -ffast-math -DHAVE_ZLIB -static "${SRC[@]/#/$WORK/src/}" -lz -lm -o "$OUT"
+  # MSYS2 MinGW64, no OpenMP. Ship MinGW zlib/runtime DLLs next to the exe (see workflow: upload dist/).
+  gcc -O3 -ffast-math -DHAVE_ZLIB "${SRC[@]/#/$WORK/src/}" -lz -lm -static-libgcc -o "$OUT"
+  local d dll b bins=(/mingw64/bin)
+  d=$(dirname "$OUT")
+  if [[ -n "${MSYSTEM_PREFIX:-}" && -d "${MSYSTEM_PREFIX}/bin" ]]; then
+    bins+=("${MSYSTEM_PREFIX}/bin")
+  fi
+  for dll in zlib1.dll libwinpthread-1.dll libgcc_s_seh-1.dll; do
+    for b in "${bins[@]}"; do
+      if [[ -f "$b/$dll" ]]; then
+        cp "$b/$dll" "$d/"
+        break
+      fi
+    done
+  done
 }
 
 case "$OS" in
