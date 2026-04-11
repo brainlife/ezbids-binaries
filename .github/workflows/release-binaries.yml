@@ -46,10 +46,15 @@ jobs:
 
       - name: Build binary
         id: build
-        shell: ${{ matrix.library == 'allineate' && matrix.os == 'windows-latest' && 'msys2 {0}' || 'bash' }}
+        shell: bash
         run: |
           mkdir -p dist
-          ./scripts/build.sh "${{ matrix.library }}" "${{ matrix.os }}" dist
+          if [[ "${{ matrix.library }}" == "allineate" && "${{ matrix.os }}" == "windows-latest" ]]; then
+            WS_UNIX="$(cygpath -u "$GITHUB_WORKSPACE")"
+            msys2 -c "set -euo pipefail; cd \"$WS_UNIX\" && ./scripts/build.sh allineate windows-latest dist"
+          else
+            ./scripts/build.sh "${{ matrix.library }}" "${{ matrix.os }}" dist
+          fi
           BINARY_PATH=$(./scripts/output-path.sh "${{ matrix.library }}" "${{ matrix.os }}" dist)
           if [[ "${{ matrix.library }}" == "7z" && "${{ matrix.os }}" == "windows-latest" ]]; then
             BINARY_PATH="dist"
