@@ -45,41 +45,32 @@ jobs:
           install: git mingw-w64-x86_64-gcc mingw-w64-x86_64-zlib
 
       - name: Build binary (allineate, Windows / MSYS2)
-        id: build_aw
         if: matrix.library == 'allineate' && matrix.os == 'windows-latest'
         shell: msys2 {0}
         run: |
           set -euo pipefail
           mkdir -p dist
-          ./scripts/build.sh allineate windows-latest dist
-          echo "binary_path=dist" >> "$GITHUB_OUTPUT"
+          bash scripts/build.sh allineate windows-latest dist
 
       - name: Build binary
-        id: build_std
         if: "!(matrix.library == 'allineate' && matrix.os == 'windows-latest')"
         shell: bash
         run: |
           mkdir -p dist
           ./scripts/build.sh "${{ matrix.library }}" "${{ matrix.os }}" dist
-          BINARY_PATH=$(./scripts/output-path.sh "${{ matrix.library }}" "${{ matrix.os }}" dist)
-          if [[ "${{ matrix.library }}" == "7z" && "${{ matrix.os }}" == "windows-latest" ]]; then
-            BINARY_PATH="dist"
-          fi
-          echo "binary_path=$BINARY_PATH" >> "$GITHUB_OUTPUT"
 
-      - name: Select artifact path
+      - name: Resolve artifact path
         id: build
         shell: bash
-        env:
-          AW_OUT: ${{ steps.build_aw.outputs.binary_path }}
-          STD_OUT: ${{ steps.build_std.outputs.binary_path }}
-          AW_OC: ${{ steps.build_aw.outcome }}
         run: |
-          if [[ "$AW_OC" == "success" ]]; then
-            echo "binary_path=$AW_OUT" >> "$GITHUB_OUTPUT"
+          if [[ "${{ matrix.library }}" == "allineate" && "${{ matrix.os }}" == "windows-latest" ]]; then
+            bp=dist
+          elif [[ "${{ matrix.library }}" == "7z" && "${{ matrix.os }}" == "windows-latest" ]]; then
+            bp=dist
           else
-            echo "binary_path=$STD_OUT" >> "$GITHUB_OUTPUT"
+            bp=$(./scripts/output-path.sh "${{ matrix.library }}" "${{ matrix.os }}" dist)
           fi
+          echo "binary_path=$bp" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
