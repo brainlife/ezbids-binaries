@@ -24,7 +24,9 @@ jobs:
           - python-runtime
           - allineate
         exclude:
-          # Windows .exe is built via Ubuntu MinGW cross-compile (see build-allineate-windows).
+          # Allineate is excluded from the Windows matrix row: compiling it on windows-latest was
+          # fragile (MinGW/MSYS, linking, POSIX helpers like drand48). Cross-compiling the same
+          # .exe from ubuntu-latest with gcc-mingw-w64 is reliable; see job build-allineate-windows.
           - os: windows-latest
             library: allineate
 
@@ -32,13 +34,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install allineate build deps (Linux)
-        if: matrix.library == 'allineate' && matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y libomp-dev zlib1g-dev
-
-      - name: Install allineate build deps (macOS)
-        if: matrix.library == 'allineate' && matrix.os == 'macos-latest'
-        run: brew install libomp
+      - name: Install allineate build dependencies
+        shell: bash
+        run: ./scripts/build-deps/allineate.sh "${{ matrix.library }}" "${{ matrix.os }}"
 
       - name: Build binary
         id: build
@@ -59,6 +57,8 @@ jobs:
           path: ${{ steps.build.outputs.binary_path }}
           retention-days: 1
 
+  # Windows-target binary only: runs on Linux so we use Ubuntu's packaged MinGW cross toolchain
+  # instead of a native windows-latest build (painful in CI for this C project).
   build-allineate-windows:
     name: Build allineate (windows-latest)
     runs-on: ubuntu-latest
@@ -66,8 +66,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install MinGW and zlib (cross-compile)
-        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64 libz-mingw-w64-dev
+      - name: Install allineate build dependencies
+        run: ./scripts/build-deps/allineate.sh allineate windows-cross
 
       - name: Build Windows binary
         id: build

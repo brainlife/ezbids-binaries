@@ -2,6 +2,7 @@
 # Fetch neurolabusc/allineate at a pinned commit and compile a standalone binary.
 # Contract: write the path from output-path.sh.
 # Windows release builds use Ubuntu MinGW cross (ALLINEATE_WINDOWS_CROSS=1) for a static .exe.
+# CI avoids windows-latest for this library: native MinGW/MSYS there was brittle; cross-compile is stable.
 set -euo pipefail
 
 ALLINEATE_REPO="${ALLINEATE_REPO:-neurolabusc/allineate}"
