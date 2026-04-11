@@ -42,7 +42,7 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          install: git mingw-w64-x86_64-gcc mingw-w64-x86_64-zlib
+          install: git curl mingw-w64-x86_64-gcc mingw-w64-x86_64-zlib
 
       - name: Build binary (allineate, Windows / MSYS2)
         if: matrix.library == 'allineate' && matrix.os == 'windows-latest'
@@ -50,6 +50,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
+          chmod +x scripts/build.sh scripts/build/*.sh
           bash scripts/build.sh allineate windows-latest dist
 
       - name: Build binary

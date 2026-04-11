@@ -62,22 +62,8 @@ compile_macos() {
 }
 
 compile_windows_mingw() {
-  # Invoked from MSYS2 MinGW64 shell on CI; gcc is mingw-w64-x86_64-gcc
-  gcc -O3 -ffast-math -fopenmp -DHAVE_ZLIB "${SRC[@]/#/$WORK/src/}" -lz -lm -static-libgcc -o "$OUT"
-  local dir bins b dll
-  dir=$(dirname "$OUT")
-  bins=(/mingw64/bin)
-  if [[ -n "${MSYSTEM_PREFIX:-}" && -d "${MSYSTEM_PREFIX}/bin" ]]; then
-    bins+=("${MSYSTEM_PREFIX}/bin")
-  fi
-  for dll in libgcc_s_seh-1.dll libwinpthread-1.dll libgomp-1.dll; do
-    for b in "${bins[@]}"; do
-      if [[ -f "$b/$dll" ]]; then
-        cp "$b/$dll" "$dir/"
-        break
-      fi
-    done
-  done
+  # MSYS2 MinGW64: fully static link (no OpenMP) so the release .exe has no MinGW/Zlib DLL deps.
+  gcc -O3 -ffast-math -DHAVE_ZLIB -static "${SRC[@]/#/$WORK/src/}" -lz -lm -o "$OUT"
 }
 
 case "$OS" in
