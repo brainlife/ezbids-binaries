@@ -23,6 +23,10 @@ jobs:
           - 7z
           - python-runtime
           - allineate
+        exclude:
+          # Windows .exe is built via Ubuntu MinGW cross-compile (see build-allineate-windows).
+          - os: windows-latest
+            library: allineate
 
     steps:
       - name: Checkout
@@ -36,42 +40,17 @@ jobs:
         if: matrix.library == 'allineate' && matrix.os == 'macos-latest'
         run: brew install libomp
 
-      - name: Set up MSYS2 (allineate, Windows)
-        if: matrix.library == 'allineate' && matrix.os == 'windows-latest'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: git curl mingw-w64-x86_64-gcc mingw-w64-x86_64-zlib
-
-      - name: Build binary (allineate, Windows / MSYS2)
-        if: matrix.library == 'allineate' && matrix.os == 'windows-latest'
-        shell: msys2 {0}
-        run: |
-          set -euo pipefail
-          mkdir -p dist
-          chmod +x scripts/build.sh scripts/build/*.sh
-          bash scripts/build.sh allineate windows-latest dist
-
       - name: Build binary
-        if: "!(matrix.library == 'allineate' && matrix.os == 'windows-latest')"
+        id: build
         shell: bash
         run: |
           mkdir -p dist
           ./scripts/build.sh "${{ matrix.library }}" "${{ matrix.os }}" dist
-
-      - name: Resolve artifact path
-        id: build
-        shell: bash
-        run: |
-          if [[ "${{ matrix.library }}" == "allineate" && "${{ matrix.os }}" == "windows-latest" ]]; then
-            bp=dist
-          elif [[ "${{ matrix.library }}" == "7z" && "${{ matrix.os }}" == "windows-latest" ]]; then
-            bp=dist
-          else
-            bp=$(./scripts/output-path.sh "${{ matrix.library }}" "${{ matrix.os }}" dist)
+          BINARY_PATH=$(./scripts/output-path.sh "${{ matrix.library }}" "${{ matrix.os }}" dist)
+          if [[ "${{ matrix.library }}" == "7z" && "${{ matrix.os }}" == "windows-latest" ]]; then
+            BINARY_PATH="dist"
           fi
-          echo "binary_path=$bp" >> "$GITHUB_OUTPUT"
+          echo "binary_path=$BINARY_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -80,10 +59,36 @@ jobs:
           path: ${{ steps.build.outputs.binary_path }}
           retention-days: 1
 
+  build-allineate-windows:
+    name: Build allineate (windows-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install MinGW and zlib (cross-compile)
+        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64 libz-mingw-w64-dev
+
+      - name: Build Windows binary
+        id: build
+        shell: bash
+        run: |
+          mkdir -p dist
+          export LIBRARY=allineate DIST=dist ALLINEATE_WINDOWS_CROSS=1
+          bash scripts/build/allineate.sh
+          echo "binary_path=$(./scripts/output-path.sh allineate windows-latest dist)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: allineate-windows-latest
+          path: ${{ steps.build.outputs.binary_path }}
+          retention-days: 1
+
   release:
     name: Create release
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, build-allineate-windows]
     permissions:
       contents: write
     steps:
