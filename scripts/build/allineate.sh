@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Fetch neurolabusc/allineate at a pinned commit and compile a standalone binary.
 # Contract: write the path from output-path.sh.
-# Windows release builds use Ubuntu MinGW cross (ALLINEATE_WINDOWS_CROSS=1) for a static .exe.
-# CI avoids windows-latest for this library: native MinGW/MSYS there was brittle; cross-compile is stable.
+# windows-latest: MinGW cross-compile on Linux only (Ubuntu in CI). Building the binary using windows was proving challenging so we cross compile on linux instead.
 set -euo pipefail
 
 ALLINEATE_REPO="${ALLINEATE_REPO:-neurolabusc/allineate}"
@@ -69,43 +68,19 @@ compile_macos() {
   fi
 }
 
-compile_windows_mingw_native() {
-  # Local MSYS2 MinGW64 (no OpenMP). MinGW lacks srand48/drand48 — link small shim.
-  rand48_shim "$WORK"
-  gcc -O3 -ffast-math -DHAVE_ZLIB \
-    "$WORK/rand48_win.c" "${SRC[@]/#/$WORK/src/}" \
-    -lz -lm -static-libgcc -o "$OUT"
-  local dll b bins=(/mingw64/bin)
-  local d
-  d=$(dirname "$OUT")
-  if [[ -n "${MSYSTEM_PREFIX:-}" && -d "${MSYSTEM_PREFIX}/bin" ]]; then
-    bins+=("${MSYSTEM_PREFIX}/bin")
+compile_windows() {
+  # x86_64-w64-mingw32-gcc on Ubuntu (or other Linux with libz-mingw-w64-dev). MinGW lacks
+  # srand48/drand48 — link small shim.
+  if [[ "$(uname -s)" != Linux ]]; then
+    echo "allineate: OS=windows-latest is only built on Linux (MinGW cross). Use Ubuntu." >&2
+    exit 1
   fi
-  for dll in zlib1.dll libwinpthread-1.dll libgcc_s_seh-1.dll; do
-    for b in "${bins[@]}"; do
-      if [[ -f "$b/$dll" ]]; then
-        cp "$b/$dll" "$d/"
-        break
-      fi
-    done
-  done
-}
-
-compile_windows_mingw_cross() {
   rand48_shim "$WORK"
   x86_64-w64-mingw32-gcc -O3 -ffast-math -DHAVE_ZLIB \
     -I/usr/x86_64-w64-mingw32/include \
     "$WORK/rand48_win.c" "${SRC[@]/#/$WORK/src/}" \
     -L/usr/x86_64-w64-mingw32/lib -lz -lm -static -o "$OUT"
 }
-
-if [[ -n "${ALLINEATE_WINDOWS_CROSS:-}" ]]; then
-  OUT=$("$SCRIPT_DIR/output-path.sh" "$LIBRARY" "windows-latest" "$DIST")
-  fetch_and_verify_sources
-  compile_windows_mingw_cross
-  [[ -f "$OUT" ]] || exit 1
-  exit 0
-fi
 
 : "${OS:?OS not set}"
 OUT=$("$SCRIPT_DIR/output-path.sh" "$LIBRARY" "$OS" "$DIST")
@@ -121,7 +96,7 @@ case "$OS" in
     chmod +x "$OUT"
     ;;
   windows-latest)
-    compile_windows_mingw_native
+    compile_windows
     ;;
   *)
     echo "Unsupported OS: $OS" >&2

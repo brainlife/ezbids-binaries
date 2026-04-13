@@ -13,7 +13,8 @@ on:
 jobs:
   build:
     name: Build ${{ matrix.library }} (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    # Allineate + windows-latest runs on ubuntu-latest: Windows .exe is always MinGW cross-built on Linux.
+    runs-on: ${{ matrix.library == 'allineate' && matrix.os == 'windows-latest' && 'ubuntu-latest' || matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -23,12 +24,6 @@ jobs:
           - 7z
           - python-runtime
           - allineate
-        exclude:
-          # Allineate is excluded from the Windows matrix row: compiling it on windows-latest was
-          # fragile (MinGW/MSYS, linking, POSIX helpers like drand48). Cross-compiling the same
-          # .exe from ubuntu-latest with gcc-mingw-w64 is reliable; see job build-allineate-windows.
-          - os: windows-latest
-            library: allineate
 
     steps:
       - name: Checkout
@@ -57,38 +52,10 @@ jobs:
           path: ${{ steps.build.outputs.binary_path }}
           retention-days: 1
 
-  # Windows-target binary only: runs on Linux so we use Ubuntu's packaged MinGW cross toolchain
-  # instead of a native windows-latest build (painful in CI for this C project).
-  build-allineate-windows:
-    name: Build allineate (windows-latest)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install allineate build dependencies
-        run: ./scripts/build-deps/allineate.sh allineate windows-cross
-
-      - name: Build Windows binary
-        id: build
-        shell: bash
-        run: |
-          mkdir -p dist
-          export LIBRARY=allineate DIST=dist ALLINEATE_WINDOWS_CROSS=1
-          bash scripts/build/allineate.sh
-          echo "binary_path=$(./scripts/output-path.sh allineate windows-latest dist)" >> "$GITHUB_OUTPUT"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: allineate-windows-latest
-          path: ${{ steps.build.outputs.binary_path }}
-          retention-days: 1
-
   release:
     name: Create release
     runs-on: ubuntu-latest
-    needs: [build, build-allineate-windows]
+    needs: build
     permissions:
       contents: write
     steps:

@@ -2,14 +2,12 @@
 # Install OS packages needed to compile allineate in CI.
 # Usage: scripts/build-deps/allineate.sh <library> <os>
 #   library: matrix.library (only "allineate" does anything)
-#   os:      ubuntu-latest | macos-latest | windows-latest | windows-cross
-#
-# windows-cross: MinGW cross-compile deps on Ubuntu (build-allineate-windows job).
-# windows-latest: no-op here (allineate Windows binary is built via windows-cross).
+#   os:      ubuntu-latest | macos-latest | windows-latest (MinGW deps on Ubuntu only; windows-cross alias)
+
 set -euo pipefail
 
 LIBRARY="${1:?library name}"
-OS="${2:?runner os or windows-cross}"
+OS="${2:?runner os label}"
 
 if [[ "$LIBRARY" != "allineate" ]]; then
   exit 0
@@ -23,12 +21,9 @@ case "$OS" in
   macos-latest)
     brew install libomp
     ;;
-  windows-cross)
+  windows-latest|windows-cross)
     sudo apt-get update
     sudo apt-get install -y gcc-mingw-w64-x86-64 libz-mingw-w64-dev
-    ;;
-  windows-latest)
-    exit 0
     ;;
   *)
     echo "Unknown OS for allineate build deps: $OS" >&2
