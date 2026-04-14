@@ -16,10 +16,11 @@ fi
 case "$OS" in
   ubuntu-latest)
     sudo apt-get update
-    sudo apt-get install -y libomp-dev zlib1g-dev
+    sudo apt-get install -y zlib1g-dev
     ;;
   macos-latest)
-    brew install libomp
+    # Clang + system zlib provided by default in macos-latest github actions images
+    :
     ;;
   windows-latest|windows-cross)
     sudo apt-get update

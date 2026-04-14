@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # Fetch neurolabusc/allineate at a pinned commit and compile a standalone binary.
 # Contract: write the path from output-path.sh.
-# windows-latest: MinGW cross-compile on Linux only (Ubuntu in CI). Building the binary using windows was proving challenging so we cross compile on linux instead.
+#
+# Portable binaries: no OpenMP — avoids runtime libgomp (Linux) / libomp (macOS) that users may not have.
+# Upstream supports single-threaded builds when _OPENMP is unset. Windows: static MinGW link on Linux CI.
+# zlib uses the OS/SDK shared libz (standard on macOS/Linux); Windows is statically linked.
+#
+# windows-latest: MinGW cross-compile on Linux only (Ubuntu in CI).
 set -euo pipefail
 
 ALLINEATE_REPO="${ALLINEATE_REPO:-neurolabusc/allineate}"
@@ -43,29 +48,11 @@ fetch_and_verify_sources() {
 }
 
 compile_linux() {
-  gcc -O3 -ffast-math -fopenmp -DHAVE_ZLIB "${SRC[@]/#/$WORK/src/}" -lz -lm -o "$OUT"
+  gcc -O3 -ffast-math -DHAVE_ZLIB "${SRC[@]/#/$WORK/src/}" -lz -lm -o "$OUT"
 }
 
 compile_macos() {
-  local omp_prefix=""
-  for prefix in /opt/homebrew/opt/libomp /usr/local/opt/libomp; do
-    if [[ -f "$prefix/include/omp.h" ]]; then
-      omp_prefix=$prefix
-      break
-    fi
-  done
-  if [[ -n "$omp_prefix" ]]; then
-    clang -O3 -ffast-math -Xclang -fopenmp \
-      -I"$omp_prefix/include" -L"$omp_prefix/lib" -lomp \
-      -DHAVE_ZLIB "${SRC[@]/#/$WORK/src/}" -lz -lm -o "$OUT"
-  elif command -v gcc-14 >/dev/null 2>&1; then
-    gcc-14 -O3 -ffast-math -fopenmp -DHAVE_ZLIB "${SRC[@]/#/$WORK/src/}" -lz -lm -o "$OUT"
-  elif command -v gcc-13 >/dev/null 2>&1; then
-    gcc-13 -O3 -ffast-math -fopenmp -DHAVE_ZLIB "${SRC[@]/#/$WORK/src/}" -lz -lm -o "$OUT"
-  else
-    echo "Building without OpenMP (install Homebrew libomp for faster builds): brew install libomp" >&2
-    clang -O3 -ffast-math -DHAVE_ZLIB "${SRC[@]/#/$WORK/src/}" -lz -lm -o "$OUT"
-  fi
+  clang -O3 -ffast-math -DHAVE_ZLIB "${SRC[@]/#/$WORK/src/}" -lz -lm -o "$OUT"
 }
 
 compile_windows() {
