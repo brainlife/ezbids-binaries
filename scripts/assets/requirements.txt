@@ -1,5 +1,6 @@
 numpy==1.23.0
 nibabel==4.0.0
+antspyx
 pandas
 matplotlib
 pyyaml==5.4.1
